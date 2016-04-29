@@ -1,0 +1,292 @@
+
+<!doctype html>
+<!--The Same-Origin Policy>    
+Our website send a request to Bart website and with RESTful API keys to reqeust content from Bart website
+<!--> 
+<!--[if IE 7]>    
+<html class="no-js ie7 oldie" lang="en" 
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/terms/"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:og="http://ogp.me/ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:sioc="http://rdfs.org/sioc/ns#"
+  xmlns:sioct="http://rdfs.org/sioc/types#"
+  xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#"  lang="en" dir="ltr"> <![endif]-->
+<!--[if IE 8]>    
+<html class="no-js ie8 oldie" lang="en" 
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/terms/"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:og="http://ogp.me/ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:sioc="http://rdfs.org/sioc/ns#"
+  xmlns:sioct="http://rdfs.org/sioc/types#"
+  xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#"  lang="en" dir="ltr"> <![endif]-->
+<!--[if gt IE 8]><!--> 
+<html class="no-js page-schedules-eta" lang="en" 
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/terms/"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:og="http://ogp.me/ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:sioc="http://rdfs.org/sioc/ns#"
+  xmlns:sioct="http://rdfs.org/sioc/types#"
+  xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#"  lang="en" dir="ltr"> 
+<!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <title>COEN396 BART</title>
+    <link type="text/css" rel="stylesheet" href="main.css">
+    <script src="jquery.js"></script>
+    <script>
+    function setCookie(cname, cvalue, exdays) {
+        var d = new Date();
+        d.setTime(d.getTime() + (exdays*24*60*60*1000));
+        var expires = "expires="+d.toUTCString();
+        document.cookie = cname + "=" + cvalue + "; " + expires;
+    }
+
+    function getCookie(cname) {
+        var name = cname + "=";
+        var ca = document.cookie.split(';');
+        for(var i=0; i<ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1);
+            if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+        }
+        return "";
+    }
+    function checkCookie(){
+      if (getCookie("DWU2_2") != ""){
+        var cnt = parseInt(getCookie("DWU2_2"));
+        cnt++;
+        var msg = "Welcome back! You have been here "+cnt.toString()+" times! "
+        alert(msg);
+        setCookie('DWU2_2', cnt.toString(), 365);
+      }else{
+        alert("Welcome! This is the first time you visit!");
+        setCookie('DWU2_2', '1', 365);
+      }
+    }
+    </script>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        clear: both;
+        height: 300px;
+        width: 500px;
+        margin-left: 350px;
+      }
+      #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+    </style>
+  </head>
+
+  <body onload="checkCookie()">
+   <div id="header">Welcome to BARTDIR</div>
+    <div id="map"></div>
+   <div id="article">
+    <div id="aside">
+    	<p>Here's the list of stations. </p>
+      <p>Choose your departure station below:<br><span id="start_list"></span>
+      </p>
+      <p>Choose your arrival station below:<br><span id="end_list"> </span>
+        <span><input type="button" onclick="apply()" value="apply"></span>	
+      </p>
+      <p id="visitor"> </p>
+    </div>
+		<div id="Section">
+      <p>Next Train Count Down Time: <span id="time"></span></p>
+			<table id="schedule"> </table>
+		</div>
+  </div>
+  <div id="footbar">© Made by SCU COEN 396 DWU2</div>
+  <script>
+     var directionsDisplay;
+     var directionsService;
+      function initMap() {
+        directionsDisplay = new google.maps.DirectionsRenderer;
+        directionsService = new google.maps.DirectionsService;
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 14,
+          center: {lat: 37.77, lng: -122.447}
+        });
+        directionsDisplay.setMap(map);
+
+        //calculateAndDisplayRoute(directionsService, directionsDisplay);
+      }
+function calculateAndDisplayRoute(directionsService, directionsDisplay, x1, y1, x2, y2) {
+  directionsService.route({
+    origin: {lat: parseFloat(x1), lng: parseFloat(y1)},  // Haight.
+    destination: {lat: parseFloat(x2), lng: parseFloat(y2)},  // Ocean Beach.
+    //origin: {lat: 37.77, lng: -122.447},  // Haight.
+    //destination: {lat: 37.768, lng: -122.511},  // Ocean Beach.
+    // Note that Javascript allows us to access the constant
+    // using square brackets and a string value as its
+    // "property."
+    travelMode: google.maps.TravelMode["TRANSIT"]//google.maps.TransitMode.RAIL
+  }, function(response, status) {
+    if (status == google.maps.DirectionsStatus.OK) {
+      directionsDisplay.setDirections(response);
+    } else {
+      window.alert('Directions request failed due to ' + status);
+    }
+  });
+}
+</script>
+           <script async defer
+    		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBHn7au2CXMp_boVumJlduitrv0i_K3Qo8&callback=initMap">
+    	</script>
+<script>
+    var global_flag = 0;
+    var xhttp = new XMLHttpRequest();
+    var http_apply_departure_time = new XMLHttpRequest();
+    var http_apply_fare = new XMLHttpRequest();
+    var next_second = 0;
+    var url_fare, url_departure;
+    var lati = [], longi = [], sta = [];
+    xhttp.onreadystatechange = function() {
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+          sta_list_load(xhttp);
+        }
+    };
+    xhttp.open("GET", "http://api.bart.gov/api/stn.aspx?cmd=stns&key=MW9S-E7SL-26DU-VV8V", true);
+    xhttp.send();
+    
+    function apply(){
+      sta_apply();
+      setInterval(sta_apply, 30000);
+    }
+    function sta_apply() {
+      var a = document.getElementById("start");
+      var sta = a.options[a.selectedIndex].value;
+      var b = document.getElementById("end");
+      var stb = b.options[b.selectedIndex].value;
+      url_departure = "http://api.bart.gov/api/sched.aspx?cmd=stnsched&orig="+ sta +"&key=MW9S-E7SL-26DU-VV8V"
+      url_fare = "http://api.bart.gov/api/sched.aspx?cmd=fare&orig="+sta+"&dest="+stb+"&key=MW9S-E7SL-26DU-VV8V"
+      //alert(sta + stb);
+      http_apply_departure_time.open("GET", url_departure, true);
+      http_apply_departure_time.send();
+      global_flag = 1;
+      calculateAndDisplayRoute(directionsService, directionsDisplay, lati[a.selectedIndex], longi[a.selectedIndex], lati[b.selectedIndex], longi[b.selectedIndex]);
+    }
+    http_apply_departure_time.onreadystatechange = function() {
+        if (http_apply_departure_time.readyState == 4 && http_apply_departure_time.status == 200) {
+        //window.alert("http_apply_departure_time");
+        http_apply_fare.open("GET", url_fare, true);
+        http_apply_fare.send();
+        }
+    };
+    http_apply_fare.onreadystatechange = function() {
+        if (http_apply_fare.readyState == 4 && http_apply_fare.status == 200) {
+        //window.alert("http_apply_fare");
+          sta_sched_load(http_apply_departure_time, http_apply_fare);
+        }
+    };
+    
+    function sta_list_load(xml) {
+        var xmlDoc = xml.responseXML;
+      var i = 0;
+      sta_list_a = "<select id='start'>";
+      sta_list_b = "<select id='end'>";
+      //window.alert(xmlDoc.getElementsByTagName("name").length);
+      while (i < xmlDoc.getElementsByTagName("name").length)
+      {
+        sta_list_a += "<option value='" + xmlDoc.getElementsByTagName("abbr")[i].childNodes[0].nodeValue + "'>" + xmlDoc.getElementsByTagName("name")[i].childNodes[0].nodeValue +"</option>";
+        sta_list_b += "<option value='" + xmlDoc.getElementsByTagName("abbr")[i].childNodes[0].nodeValue + "'>" + xmlDoc.getElementsByTagName("name")[i].childNodes[0].nodeValue +"</option>";
+        lati[i] = xmlDoc.getElementsByTagName("gtfs_latitude")[i].childNodes[0].nodeValue;
+        longi[i] = xmlDoc.getElementsByTagName("gtfs_longitude")[i].childNodes[0].nodeValue;
+        sta[i] = xmlDoc.getElementsByTagName("abbr")[i].childNodes[0].nodeValue;
+        i++;
+      }
+      sta_list_a += "</select>";
+      sta_list_b += "</select>";
+      document.getElementById("start_list").innerHTML = sta_list_a;
+      document.getElementById("end_list").innerHTML = sta_list_b;
+    }
+
+      function updateTime() {
+          var currentTime = new Date();
+          var hours = currentTime.getHours();
+          var minutes = currentTime.getMinutes();
+          var seconds = currentTime.getSeconds();
+      var temp = hours*3600 + minutes*60 + seconds;
+      var temp_h = Math.floor((next_second-temp)/3600) <= 0 ? "00" : Math.floor((next_second-temp)/3600).toString();
+      var temp_m = Math.floor((next_second-temp)/60) <= 0 ? "00" : (Math.floor((next_second-temp)/60) < 10 ? "0"+Math.floor((next_second-temp)/60).toString() : Math.floor((next_second-temp)/60).toString());
+      var temp_s = ((next_second - temp)%60) <= 0 ? "00" : (((next_second - temp)%60) < 10 ? "0"+ ((next_second - temp)%60).toString() : ((next_second - temp)%60).toString());
+      var count_down = temp_h + " : " + temp_m + " : " + temp_s;
+          document.getElementById('time').innerHTML=count_down;
+      }
+
+    function parseTime(s, flag) {
+        var part = s.match(/(\d+):(\d+)(?: )?(am|pm)?/i);
+        var hh = parseInt(part[1], 10);
+        var mm = parseInt(part[2], 10);
+        var ap = part[3] ? part[3].toUpperCase() : null;
+            var currentTime = new Date();
+            var hours = currentTime.getHours();
+            var minutes = currentTime.getMinutes();
+        if (ap === "AM") {
+            if (hh == 12) {
+                hh = 0;
+            }
+        }
+        if (ap === "PM") {
+            if (hh != 12) {
+                hh += 12;
+            }
+        }
+      if (flag == 1) {
+        next_second = hh*3600 + mm*60;
+      }
+        return (hours*60 + minutes) < (hh*60 + mm) ? 1 : 0;
+    }
+    function sta_sched_load(xml_departure, xml_fare) {
+        var xmlDoc_departure = xml_departure.responseXML;
+      var xmlDoc_fare = xml_fare.responseXML;
+      var i;
+      var next = 0;
+      schedule_list = "";
+      //window.alert(parseTime(xmlDoc_departure.getElementsByTagName("item")[0].getAttribute('origTime'), 0));
+      while (next < xmlDoc_departure.getElementsByTagName("item").length)
+      {
+        if (1 == parseTime(xmlDoc_departure.getElementsByTagName("item")[next].getAttribute('origTime'), 0)) break;
+        next++;
+      }
+      i = next;
+      parseTime(xmlDoc_departure.getElementsByTagName("item")[next].getAttribute('origTime'), 1);
+      while (i < xmlDoc_departure.getElementsByTagName("item").length)
+      {
+        schedule_list += "<tr><td width='150'>" + ((i == next) ? "Next Train -->> </td><td>" : "</td><td>")+ xmlDoc_departure.getElementsByTagName("item")[i].getAttribute('line') + "</td><td>" + xmlDoc_departure.getElementsByTagName("item")[i].getAttribute('origTime') + "</td><td>" + xmlDoc_fare.getElementsByTagName("fare")[0].childNodes[0].nodeValue + "</td><tr>";
+        i++;
+      }
+      document.getElementById("schedule").innerHTML = schedule_list;
+      if (global_flag == 1){
+        global_flag = 0;
+        updateTime();
+        setInterval(updateTime, 1000);
+      }
+    }
+    </script>
+  </body>
+</html>
+
